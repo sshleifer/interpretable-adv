@@ -162,25 +162,7 @@ def main():
         cuda.get_device(args.gpu).use()
         xp.random.seed(args.random_seed)
 
-    n_vocab = len(vocab)
-    model = nets.uniLSTM_iVAT(n_vocab=n_vocab, emb_dim=args.emb_dim,
-                             hidden_dim=args.hidden_dim,
-                             use_dropout=args.dropout, n_layers=args.n_layers,
-                             hidden_classifier=args.hidden_cls_dim,
-                             use_adv=args.use_adv, xi_var=args.xi_var,
-                             n_class=n_class, args=args)
-    model.train_vocab_size = t_vocab
-    model.vocab_size = n_vocab
-    model.logging = logging
-
-    if args.pretrained_model != '':
-        # load pretrained LM model
-        pretrain_model = lm_nets.RNNForLM(n_vocab, 1024, args.n_layers, 0.50,
-                                          share_embedding=False,
-                                          adaptive_softmax=args.adaptive_softmax)
-        serializers.load_npz(args.pretrained_model, pretrain_model)
-        pretrain_model.lstm = pretrain_model.rnn
-        model.set_pretrained_lstm(pretrain_model, word_only=args.word_only)
+    model = build_classifier(args, n_class, t_vocab, len(vocab))
 
 
     all_nn_flag = args.use_attn_d
@@ -421,6 +403,28 @@ def main():
             x_length = None
             y = None
             model.compute_all_nearest_words(top_k=args.nn_k)
+
+
+def build_classifier(args, n_class, t_vocab, n_vocab):
+
+    model = nets.uniLSTM_iVAT(n_vocab=n_vocab, emb_dim=args.emb_dim,
+                              hidden_dim=args.hidden_dim,
+                              use_dropout=args.dropout, n_layers=args.n_layers,
+                              hidden_classifier=args.hidden_cls_dim,
+                              use_adv=args.use_adv, xi_var=args.xi_var,
+                              n_class=n_class, args=args)
+    model.train_vocab_size = t_vocab
+    model.vocab_size = n_vocab
+    model.logging = logging
+    if args.pretrained_model != '':
+        # load pretrained LM model
+        pretrain_model = lm_nets.RNNForLM(n_vocab, 1024, args.n_layers, 0.50,
+                                          share_embedding=False,
+                                          adaptive_softmax=args.adaptive_softmax)
+        serializers.load_npz(args.pretrained_model, pretrain_model)
+        pretrain_model.lstm = pretrain_model.rnn
+        model.set_pretrained_lstm(pretrain_model, word_only=args.word_only)
+    return model
 
 
 if __name__ == '__main__':
