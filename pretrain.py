@@ -151,6 +151,8 @@ def main():
                           adaptive_softmax=args.adaptive_softmax,
                           n_units_word=args.n_units_word)
 
+    if args.resume:
+        serializers.load_npz(args.resume, model)
     if args.norm_vecs:
         print('#norm_vecs')
         vocab_freq = np.array([float(vocab_count.get(w, 1)) for w, idx in
