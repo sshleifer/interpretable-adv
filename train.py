@@ -25,6 +25,15 @@ from chainer import serializers
 import nets
 import lm_nets
 
+import pickle
+def pickle_save(obj, path):
+    with open(path, 'wb') as f:
+        pickle.dump(obj, f)
+def pickle_load(path):
+    with open(path, 'rb') as f:
+        return pickle.load(f)
+def lmap(f,x): return list(map(f,x))
+
 def main():
 
     logging.basicConfig(
@@ -216,12 +225,13 @@ def main():
             output = model(x, x_length)
 
             predict = xp.argmax(output.data, axis=1)
+            predicted_np.append(output.data)
             correct_cnt += xp.sum(predict == y)
             total_cnt += len(y)
 
         accuracy = (correct_cnt / total_cnt) * 100.0
         chainer.config.enable_backprop = True
-        return accuracy
+        return accuracy, predicted_np
 
     def get_unlabled(perm_semi, i_index):
         index = i_index * batchsize_semi
@@ -244,13 +254,15 @@ def main():
     adv_rep_pos_statics = {}
 
     if args.eval:
-        dev_accuracy = evaluate(dev_x, dev_x_len, dev_y)
+        dev_accuracy, _ = evaluate(dev_x, dev_x_len, dev_y)
         log_str = ' [dev] accuracy:{}, length:{}'.format(str(dev_accuracy))
         logging.info(log_str)
 
         # test
-        test_accuracy = evaluate(test_x, test_x_len, test_y)
+        test_accuracy, predicted_np = evaluate(test_x, test_x_len, test_y)
+        pickle_save(predicted_np, f'test_preds_{test_accuracy:.5f}.pkl')
         log_str = ' [test] accuracy:{}, length:{}'.format(str(test_accuracy))
+
         logging.info(log_str)
 
 
@@ -373,12 +385,12 @@ def main():
 
         model.set_train(False)
         # dev
-        dev_accuracy = evaluate(dev_x, dev_x_len, dev_y)
+        dev_accuracy, _= evaluate(dev_x, dev_x_len, dev_y)
         log_str = ' [dev] accuracy:{}'.format(str(dev_accuracy))
         logging.info(log_str)
 
         # test
-        test_accuracy = evaluate(test_x, test_x_len, test_y)
+        test_accuracy, _ = evaluate(test_x, test_x_len, test_y)
         log_str = ' [test] accuracy:{}'.format(str(test_accuracy))
         logging.info(log_str)
 
