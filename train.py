@@ -260,10 +260,13 @@ def main():
 
         # test
         test_accuracy, predicted_np = evaluate(test_x, test_x_len, test_y)
-        pickle_save(predicted_np, f'test_preds_{test_accuracy:.5f}.pkl')
+        save_path =  f'test_preds_{test_accuracy:.5f}.pkl'
+        pickle_save(predicted_np,save_path)
         log_str = ' [test] accuracy:{}, length:{}'.format(str(test_accuracy))
 
         logging.info(log_str)
+        print(f'saved test predictions to {save_path}')
+        return
 
 
     for epoch in range(args.n_epoch):
